@@ -722,7 +722,7 @@ function explode(lobby, b, radius, owner) {
   lobby.vehicles = lobby.vehicles.filter(v => v.hp > 0);
 }
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Сервер запущен: http://localhost:${PORT}`);
   console.log(`Для других устройств: http://<твой IP>:${PORT}`);
