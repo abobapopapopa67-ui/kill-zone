@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<title>KILLZONE</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    width: 100vw; height: 100vh;
+    max-width: 100vw; max-height: 100vh;
+    background: #0a0a12;
+    color: #fff;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    overflow: hidden;
+    position: fixed;
+    top: 0; left: 0;
+    user-select: none;
+    touch-action: none;
+  }
+
+  .screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .hidden { display: none !important; }
+
+  h1 {
+    font-size: 72px;
+    color: #e94560;
+    text-shadow: 0 0 30px #e94560, 0 0 60px #e94560, 0 0 100px #e94560;
+    margin-bottom: 60px;
+    letter-spacing: 10px;
+    text-align: center;
+    font-weight: 900;
+    animation: pulse 2.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+  h2 { font-size: 36px; margin-bottom: 30px; color: #e94560; text-align: center; letter-spacing: 3px; }
+
+  button {
+    background: linear-gradient(135deg, #e94560, #c23152);
+    color: #fff;
+    border: none;
+    padding: 16px 44px;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
+    margin: 8px;
+    transition: 0.15s;
+    letter-spacing: 2px;
+    box-shadow: 0 4px 15px rgba(233,69,96,0.4);
+  }
+  button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(233,69,96,0.6); }
+  button:active { transform: translateY(0); }
+  button.secondary {
+    background: linear-gradient(135deg, #2c3e50, #1a252f);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  }
+
+  input, select {
+    background: #16213e;
+    border: 2px solid #0f3460;
+    color: #fff;
+    padding: 14px 20px;
+    font-size: 18px;
+    border-radius: 8px;
+    margin: 8px;
+    width: 100%;
+    max-width: 360px;
+    font-family: inherit;
+  }
+  input:focus, select:focus { outline: none; border-color: #e94560; }
+  label { display: block; font-size: 14px; color: #888; margin-top: 10px; letter-spacing: 1px; }
+
+  .btnRow { display: flex; flex-wrap: wrap; justify-content: center; }
+
+  .formBox {
+    background: #16213e;
+    padding: 30px 40px;
+    border-radius: 16px;
+    border: 2px solid #0f3460;
+    min-width: 420px;
+    max-width: 90vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+
+  .mapGrid { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 10px 0; }
+  .mapBtn {
+    background: #0f3460;
+    padding: 12px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    border: 2px solid transparent;
+    transition: 0.15s;
+    letter-spacing: 1px;
+  }
+  .mapBtn.active { border-color: #e94560; background: #e94560; }
+
+  .lobbyList { width: 100%; max-width: 700px; max-height: 55vh; overflow-y: auto; margin: 10px 0; }
+  .lobbyCard {
+    background: #16213e;
+    border: 2px solid #0f3460;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    transition: 0.15s;
+  }
+  .lobbyCard:hover { border-color: #e94560; }
+  .lobbyCard .info { flex: 1; min-width: 200px; }
+  .lobbyCard .name { font-size: 20px; font-weight: bold; }
+  .lobbyCard .meta { font-size: 14px; color: #888; margin-top: 4px; }
+  .lobbyCard button { padding: 10px 24px; font-size: 16px; margin: 0; }
+
+  #gameScreen { padding: 0; display: block; position: absolute; inset: 0; overflow: hidden; }
+  canvas { display: block; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; }
+
+  #hud { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+
+  #topLeft {
+    position: absolute; top: 12px; left: 12px;
+    background: rgba(0,0,0,0.65);
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(233,69,96,0.4);
+    font-size: 13px;
+    letter-spacing: 1px;
+    min-width: 180px;
+  }
+  #topLeft .row { display: flex; justify-content: space-between; margin: 3px 0; }
+  #topLeft .val { color: #e94560; font-weight: bold; }
+
+  #minimapBox {
+    position: absolute; top: 12px; right: 12px;
+    background: rgba(0,0,0,0.65);
+    padding: 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(233,69,96,0.4);
+  }
+  #minimap { display: block; border-radius: 6px; }
+
+  #statsBox {
+    position: absolute; bottom: 20px; left: 20px;
+    width: 280px;
+  }
+  .statBar {
+    position: relative;
+    height: 22px;
+    background: rgba(0,0,0,0.65);
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #222;
+    margin-bottom: 6px;
+  }
+  .statBar .fill { height: 100%; transition: width 0.2s; }
+  .statBar .txt {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: bold; font-size: 13px;
+    text-shadow: 0 0 4px #000;
+    letter-spacing: 1px;
+  }
+  #hpFill { background: linear-gradient(90deg, #2ecc71, #27ae60); width: 100%; }
+  #armorFill { background: linear-gradient(90deg, #3498db, #2980b9); width: 0%; }
+  #staminaFill { background: linear-gradient(90deg, #f1c40f, #e67e22); width: 100%; }
+
+  #weaponBox {
+    position: absolute; bottom: 20px; right: 20px;
+    background: rgba(0,0,0,0.65);
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(233,69,96,0.4);
+    text-align: right;
+    min-width: 180px;
+  }
+  #weaponBox .wname { font-size: 18px; font-weight: bold; letter-spacing: 1px; }
+  #weaponBox .wammo { font-size: 14px; color: #e94560; margin-top: 4px; }
+
+  #inventory {
+    position: absolute; bottom: 100px; left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+  }
+  .invSlot {
+    width: 55px; height: 55px;
+    background: rgba(0,0,0,0.65);
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    flex-direction: column;
+    transition: 0.15s;
+  }
+  .invSlot.active { border-color: #e94560; background: rgba(233,69,96,0.3); box-shadow: 0 0 15px rgba(233,69,96,0.6); }
+  .invSlot .key { font-size: 10px; color: #888; }
+  .invSlot .name { font-size: 10px; }
+
+  #pcHints {
+    position: absolute; bottom: 200px; right: 12px;
+    background: rgba(0,0,0,0.5);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    line-height: 1.6;
+    color: #aaa;
+    letter-spacing: 0.5px;
+  }
+
+  #chatBox {
+    position: absolute; bottom: 170px; left: 20px;
+    width: 340px;
+    max-height: 200px;
+    overflow-y: auto;
+    pointer-events: none;
+  }
+  #chatBox .msg {
+    background: rgba(0,0,0,0.55);
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-bottom: 3px;
+    font-size: 13px;
+    word-wrap: break-word;
+  }
+  #chatBox .msg .nick { font-weight: bold; margin-right: 6px; }
+
+  #chatInput {
+    position: absolute; bottom: 100px; left: 20px;
+    width: 340px;
+    background: rgba(0,0,0,0.85);
+    border: 2px solid #e94560;
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    display: none;
+    z-index: 30;
+  }
+  #chatInput.active { display: block; }
+
+  #playerList {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(10,10,18,0.97);
+    border: 2px solid #e94560;
+    border-radius: 14px;
+    padding: 24px 40px;
+    min-width: 340px;
+    text-align: center;
+    z-index: 50;
+    box-shadow: 0 0 50px rgba(233,69,96,0.5);
+  }
+  #playerList h3 { color: #e94560; margin-bottom: 14px; font-size: 24px; letter-spacing: 3px; }
+  #playerList .p { padding: 8px 0; font-size: 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; gap: 20px; }
+
+  #pauseMenu {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.9);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 100;
+  }
+
+  #modal {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.9);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200;
+  }
+
+  #notif {
+    position: absolute; top: 70px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(233,69,96,0.95);
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    display: none;
+    z-index: 300;
+    box-shadow: 0 0 30px rgba(233,69,96,0.8);
+    letter-spacing: 1px;
+  }
+
+  .error { color: #e94560; margin-top: 10px; font-size: 14px; min-height: 20px; }
+
+  .settingRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 12px 0;
+    border-bottom: 1px solid #0f3460;
+    gap: 10px;
+  }
+  .settingRow span { font-size: 15px; flex: 1; }
+  .toggleBtn {
+    padding: 8px 16px;
+    font-size: 13px;
+    margin: 0;
+    min-width: 90px;
+    letter-spacing: 1px;
+  }
+  .toggleBtn.active { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+
+  #mobileControls {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    display: none;
+    z-index: 20;
+  }
+  #mobileControls.active { display: block; }
+
+  #joystick {
+    position: absolute;
+    bottom: 30px; left: 30px;
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 3px solid rgba(233,69,96,0.5);
+    pointer-events: auto;
+    touch-action: none;
+    box-shadow: 0 0 30px rgba(233,69,96,0.3);
+  }
+  #stick {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 65px; height: 65px;
+    margin-left: -32.5px; margin-top: -32.5px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #e94560, #c23152);
+    border: 2px solid #fff;
+    box-shadow: 0 0 15px rgba(233,69,96,0.8);
+    transition: transform 0.05s;
+  }
+
+  .mobBtn {
+    position: absolute;
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    background: rgba(233,69,96,0.65);
+    border: 2px solid rgba(255,255,255,0.6);
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    touch-action: none;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(233,69,96,0.5);
+    letter-spacing: 0.5px;
+  }
+  .mobBtn:active { background: rgba(233,69,96,0.95); transform: scale(0.95); }
+
+  #btnShoot {
+    bottom: 40px; right: 40px;
+    width: 110px; height: 110px;
+    font-size: 16px;
+    background: radial-gradient(circle, rgba(233,69,96,0.85), rgba(194,49,82,0.85));
+    border: 3px solid rgba(255,255,255,0.7);
+  }
+  #btnReload  { bottom: 165px; right: 45px; }
+  #btnGrenade { bottom: 40px;  right: 170px; }
+  #btnWeapon  { bottom: 165px; right: 175px; }
+  #btnDrop    { bottom: 250px; right: 45px;  width: 60px; height: 60px; font-size: 12px; }
+  #btnVehicle { bottom: 250px; right: 175px; width: 70px; height: 70px; font-size: 12px; background: rgba(241,196,15,0.7); }
+  #btnRun     { bottom: 335px; right: 175px; width: 70px; height: 70px; font-size: 13px; background: rgba(46,204,113,0.7); }
+  #btnPlayers { top: 12px; right: 12px; width: 55px; height: 55px; font-size: 12px; }
+  #btnChat    { top: 12px; right: 75px; width: 55px; height: 55px; font-size: 20px; }
+
+  @media (max-width: 700px) {
+    h1 { font-size: 42px; margin-bottom: 30px; letter-spacing: 5px; }
+    h2 { font-size: 24px; }
+    .formBox { min-width: unset; width: 92vw; padding: 20px; }
+    button { padding: 12px 28px; font-size: 16px; }
+    #pcHints { display: none; }
+    #chatBox { width: 220px; bottom: 200px; left: 10px; }
+    #chatBox .msg { font-size: 11px; }
+    #statsBox { width: 180px; bottom: 12px; left: 12px; }
+    .statBar { height: 16px; }
+    .statBar .txt { font-size: 11px; }
+    #weaponBox { bottom: 12px; right: 12px; padding: 8px 12px; min-width: 130px; }
+    #weaponBox .wname { font-size: 14px; }
+    #inventory { bottom: 70px; gap: 4px; }
+    .invSlot { width: 40px; height: 40px; font-size: 9px; }
+    .invSlot .name { font-size: 8px; }
+    #minimapBox { padding: 4px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="menuScreen" class="screen">
+  <h1>KILLZONE</h1>
+  <button onclick="goPlay()">ИГРАТЬ</button>
+  <button class="secondary" onclick="showSettings()">НАСТРОЙКИ</button>
+</div>
+
+<div id="playScreen" class="screen hidden">
+  <h2>ИГРАТЬ</h2>
+  <button onclick="showCreate()">СОЗДАТЬ ЛОББИ</button>
+  <button onclick="showJoinList()">ПРИСОЕДИНИТЬСЯ</button>
+  <button class="secondary" onclick="backToMenu()">НАЗАД</button>
+</div>
+
+<div id="createScreen" class="screen hidden">
+  <h2>СОЗДАТЬ ЛОББИ</h2>
+  <div class="formBox">
+    <label>Твой ник</label>
+    <input id="createNick" placeholder="Введи ник" maxlength="16">
+    <label>Название лобби</label>
+    <input id="createName" placeholder="Моё лобби" maxlength="24">
+    <label>Пароль (необязательно)</label>
+    <input id="createPass" placeholder="Без пароля" maxlength="16">
+    <label>Макс. игроков</label>
+    <select id="createMax">
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6" selected>6</option>
+    </select>
+    <label>Карта</label>
+    <div class="mapGrid">
+      <div class="mapBtn active" data-map="desert" onclick="selectMap(this)">🏜️ Город в пустыне</div>
+      <div class="mapBtn" data-map="streets" onclick="selectMap(this)">🏙️ Улицы</div>
+      <div class="mapBtn" data-map="metro" onclick="selectMap(this)">🚇 Метро</div>
+    </div>
+    <div class="btnRow">
+      <button onclick="createLobby()">СОЗДАТЬ</button>
+      <button class="secondary" onclick="backToPlay()">НАЗАД</button>
+    </div>
+    <div id="createError" class="error"></div>
+  </div>
+</div>
+
+<div id="joinScreen" class="screen hidden">
+  <h2>ПРИСОЕДИНИТЬСЯ</h2>
+  <div class="lobbyList" id="lobbyList"></div>
+  <div class="btnRow">
+    <button onclick="refreshLobbies()">ОБНОВИТЬ</button>
+    <button class="secondary" onclick="backToPlay()">НАЗАД</button>
+  </div>
+</div>
+
+<div id="settingsScreen" class="screen hidden">
+  <h2>НАСТРОЙКИ</h2>
+  <div class="formBox">
+    <div class="settingRow">
+      <span>Кнопка бега</span>
+      <button class="toggleBtn" id="setRunShift" onclick="setRunKey('shift')">SHIFT</button>
+      <button class="toggleBtn" id="setRunAlt" onclick="setRunKey('alt')">ALT</button>
+    </div>
+    <div class="settingRow">
+      <span>Звук</span>
+      <button class="toggleBtn active" id="setSound" onclick="toggleSound()">ВКЛ</button>
+    </div>
+    <div class="settingRow">
+      <span>HP над игроками</span>
+      <button class="toggleBtn active" id="setShowHp" onclick="toggleShowHp()">ВКЛ</button>
+    </div>
+    <div class="settingRow">
+      <span>Ники над игроками</span>
+      <button class="toggleBtn active" id="setShowNicks" onclick="toggleShowNicks()">ВКЛ</button>
+    </div>
+    <div class="settingRow">
+      <span>Мини-карта</span>
+      <button class="toggleBtn active" id="setMinimap" onclick="toggleMinimap()">ВКЛ</button>
+    </div>
+    <div class="settingRow">
+      <span>Мобильное управление</span>
+      <button class="toggleBtn" id="setMobileAuto" onclick="setMobileMode('auto')">АВТО</button>
+      <button class="toggleBtn" id="setMobileOn" onclick="setMobileMode('on')">ВКЛ</button>
+      <button class="toggleBtn" id="setMobileOff" onclick="setMobileMode('off')">ВЫКЛ</button>
+    </div>
+    <div class="row-buttons" style="margin-top:20px;">
+      <button class="secondary" onclick="backToMenu()">НАЗАД</button>
+    </div>
+  </div>
+</div>
+
+<div id="gameScreen" class="screen hidden">
+  <canvas id="canvas"></canvas>
+  <div id="hud">
+    <div id="topLeft">
+      <div class="row"><span>Игроков:</span><span class="val" id="onlineCount">0</span></div>
+      <div class="row"><span>Убийств:</span><span class="val" id="killCount">0</span></div>
+      <div class="row"><span>Смертей:</span><span class="val" id="deathCount">0</span></div>
+    </div>
+
+    <div id="minimapBox">
+      <canvas id="minimap" width="160" height="112"></canvas>
+    </div>
+
+    <div id="statsBox">
+      <div class="statBar"><div class="fill" id="hpFill"></div><div class="txt" id="hpText">100</div></div>
+      <div class="statBar"><div class="fill" id="armorFill"></div><div class="txt" id="armorText">0</div></div>
+      <div class="statBar"><div class="fill" id="staminaFill"></div><div class="txt" id="staminaText">100</div></div>
+    </div>
+
+    <div id="weaponBox">
+      <div class="wname" id="weaponName">Пистолет</div>
+      <div class="wammo"><span id="ammoCount">12</span> патронов</div>
+    </div>
+
+    <div id="inventory"></div>
+
+    <div id="chatBox"></div>
+    <input id="chatInput" maxlength="100" placeholder="Написать сообщение... (Enter)">
+
+    <div id="pcHints">
+      WASD — ходьба, Shift/Alt — бег<br>
+      Мышь — прицел, ЛКМ — стрелять<br>
+      Колёсико — смена оружия<br>
+      R — перезарядка, G — граната<br>
+      1/2/3 — оружие, Q — выброс<br>
+      E — техника/предмет<br>
+      T — чат, TAB — игроки<br>
+      Esc — пауза
+    </div>
+  </div>
+
+  <div id="mobileControls">
+    <div id="joystick"><div id="stick"></div></div>
+    <div class="mobBtn" id="btnRun">БЕГ</div>
+    <div class="mobBtn" id="btnShoot">ОГОНЬ</div>
+    <div class="mobBtn" id="btnReload">R</div>
+    <div class="mobBtn" id="btnGrenade">💣</div>
+    <div class="mobBtn" id="btnWeapon">🔫</div>
+    <div class="mobBtn" id="btnDrop">🗑️</div>
+    <div class="mobBtn" id="btnVehicle">🚗</div>
+    <div class="mobBtn" id="btnPlayers">👥</div>
+    <div class="mobBtn" id="btnChat">💬</div>
+  </div>
+
+  <div id="playerList" class="hidden">
+    <h3>ИГРОКИ</h3>
+    <div id="playerListContent"></div>
+  </div>
+
+  <div id="pauseMenu" class="hidden">
+    <h2>ПАУЗА</h2>
+    <button onclick="resumeGame()">ВОЗОБНОВИТЬ</button>
+    <button class="secondary" onclick="exitGame()">ВЫЙТИ В МЕНЮ</button>
+  </div>
+</div>
+
+<div id="modal" class="hidden">
+  <div class="formBox">
+    <h3 style="margin-bottom:10px; letter-spacing:2px;" id="modalTitle">ВХОД В ЛОББИ</h3>
+    <label>Твой ник</label>
+    <input id="modalNick" placeholder="Введи ник" maxlength="16">
+    <label>Пароль</label>
+    <input id="modalPass" type="password" placeholder="Пароль">
+    <div class="btnRow">
+      <button onclick="confirmJoin()">ЗАЙТИ</button>
+      <button class="secondary" onclick="closeModal()">ОТМЕНА</button>
+    </div>
+    <div id="modalError" class="error"></div>
+  </div>
+</div>
+
+<div id="notif"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
